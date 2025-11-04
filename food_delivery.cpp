@@ -10,73 +10,62 @@
 #include <limits>
 
 using namespace std;
-
-// --- Data Structures for Order and Graph Elements ---
-
-// Structure representing a food order
 struct Order {
-    int id;               // Unique order identifier
-    string restaurant;    // Starting point (Graph Node)
-    string destination;   // Ending point (Graph Node)
-    double price;         // Order price
+    int id;               
+    string restaurant;   
+    string destination;  
+    double price;        
 };
 
-// Structure representing a graph node (Location)
+
 struct Location {
     string name;
 };
 
-// Structure representing a graph edge (Route)
+
 struct Route {
     string start;
     string end;
-    int distance; // Edge weight (distance in km)
+    int distance; 
 };
 
-// --- Core System Class ---
+
 
 class FoodDeliverySystem {
 private:
-    // Queue: Manages incoming orders (FIFO: First-In, First-Out)
+    
     queue<Order> incomingOrders;
     
-    // Stack: Manages recently completed deliveries (LIFO: Last-In, First-Out)
+   
     stack<Order> completedOrders;
     
-    // Graph: Adjacency Map to store locations and routes for optimization.
-    // map<StartLocation, map<EndLocation, Distance>>
+    
     map<string, map<string, int>> deliveryGraph;
     
-    // Map to quickly look up any order by its ID, regardless of its status.
+    
     map<int, Order> allOrders;
     
-    // Counter for generating unique order IDs
+ 
     int nextOrderId = 1001;
 
-    /**
-     * @brief Finds the shortest path between two locations using Dijkstra's Algorithm.
-     * @param start The starting location (e.g., Depot or Restaurant).
-     * @param end The destination location (e.g., Restaurant or Customer).
-     * @return A vector of strings representing the path nodes.
-     */
+   
     vector<string> findShortestPath(const string& start, const string& end) {
-        // Distances map: stores the shortest distance found so far from 'start' to every other node.
+      
         map<string, int> distances;
-        // Predecessors map: stores the previous node in the shortest path.
+      
         map<string, string> predecessors;
-        // Visited set: tracks nodes that have been finalized.
+        
         set<string> visited;
-        // Priority Queue: Min-heap to efficiently select the unvisited node with the smallest distance.
+        
         priority_queue<pair<int, string>, vector<pair<int, string>>, greater<pair<int, string>>> pq;
 
-        // Initialize distances to infinity for all known locations.
         for (const auto& pair : deliveryGraph) {
             distances[pair.first] = INT_MAX;
         }
 
         if (distances.find(start) == distances.end()) return {}; 
 
-        // Start node distance is 0.
+        
         distances[start] = 0;
         pq.push({0, start});
 
@@ -87,12 +76,12 @@ private:
             if (visited.count(current)) continue;
             visited.insert(current);
 
-            // Explore neighbors
+         
             if (deliveryGraph.count(current)) {
                 for (const auto& edge : deliveryGraph[current]) {
                     string neighbor = edge.first;
                     int weight = edge.second;
-                    // Relaxation step: check if a shorter path to the neighbor is found through 'current'.
+                   
                     if (distances[current] != INT_MAX && distances[current] + weight < distances[neighbor]) {
                         distances[neighbor] = distances[current] + weight;
                         predecessors[neighbor] = current;
@@ -102,7 +91,7 @@ private:
             }
         }
 
-        // Reconstruct path from the 'end' node back to 'start' using predecessors.
+        
         vector<string> path;
         string current = end;
         if (distances.find(end) == distances.end() || distances[end] == INT_MAX) return {};
@@ -122,7 +111,7 @@ private:
     }
 
 public:
-    // Feature 1: Add a new graph node (Location)
+    
     void addLocation(const string& name) {
         if (deliveryGraph.find(name) == deliveryGraph.end()) {
             deliveryGraph[name] = {};
@@ -132,10 +121,10 @@ public:
         }
     }
 
-    // Feature 2: Add a new graph edge (Route) with distance (weight)
+    
     void addRoute(const string& start, const string& end, int distance) {
         if (deliveryGraph.count(start) && deliveryGraph.count(end)) {
-            // Add route for both directions (assuming roads are bidirectional)
+            
             deliveryGraph[start][end] = distance;
             deliveryGraph[end][start] = distance;
             cout << "Route added: " << start << " <-> " << end << " (" << distance << " km)" << endl;
@@ -144,11 +133,11 @@ public:
         }
     }
 
-    // Feature 3: Place a new order (Queue Push)
+    
     void placeOrder(const string& restaurant, const string& destination, double price) {
         if (deliveryGraph.count(restaurant) && deliveryGraph.count(destination)) {
             Order newOrder = {nextOrderId++, restaurant, destination, price};
-            incomingOrders.push(newOrder); // Add to the back of the queue
+            incomingOrders.push(newOrder); 
             allOrders[newOrder.id] = newOrder;
             cout << "New Order Placed (ID: " << newOrder.id << "): " << newOrder.restaurant << " -> " << newOrder.destination << endl;
         } else {
@@ -156,38 +145,38 @@ public:
         }
     }
 
-    // Feature 4: Process the next order (Queue Pop & Stack Push)
+  
     void processNextOrder() {
         if (incomingOrders.empty()) {
             cout << "No pending orders in the queue." << endl;
             return;
         }
-        Order orderToProcess = incomingOrders.front(); // Get the oldest order (FIFO)
-        incomingOrders.pop();                          // Remove from the queue
+        Order orderToProcess = incomingOrders.front(); 
+        incomingOrders.pop();                          
         cout << "Processing Order ID " << orderToProcess.id << "..." << endl;
         
         cout << "Order ID " << orderToProcess.id << " delivered successfully!" << endl;
-        completedOrders.push(orderToProcess); // Add to the top of the completed stack
+        completedOrders.push(orderToProcess); 
     }
 
-    // Feature 5: Track the last delivery (Stack Peek)
+  
     void trackLastDelivery() {
         if (completedOrders.empty()) {
             cout << "No deliveries completed yet." << endl;
             return;
         }
-        // Access the top element (most recent delivery) without removing it (LIFO)
+        
         Order lastOrder = completedOrders.top();
         cout << "Last Completed Delivery (ID: " << lastOrder.id << "): " << lastOrder.restaurant << " to " << lastOrder.destination << endl;
     }
 
-    // Feature 6: List all pending orders (Queue View)
+    
     void listPendingOrders() {
         if (incomingOrders.empty()) {
             cout << "The order queue is empty." << endl;
             return;
         }
-        queue<Order> tempQueue = incomingOrders; // Create a copy to iterate without modifying the original queue
+        queue<Order> tempQueue = incomingOrders; 
         cout << "--- Pending Orders Queue ---" << endl;
         int count = 1;
         while (!tempQueue.empty()) {
@@ -198,7 +187,7 @@ public:
         cout << "--------------------------" << endl;
     }
 
-    // Feature 7: Optimize Delivery Route (Graph Dijkstra)
+   
     void optimizeDeliveryRoute(int orderId) {
         if (allOrders.find(orderId) == allOrders.end()) {
             cout << "Order ID " << orderId << " not found." << endl;
@@ -208,18 +197,18 @@ public:
         Order order = allOrders[orderId];
         string restaurant = order.restaurant;
         string destination = order.destination;
-        string depot = "Depot"; // Assuming the agent starts at a Depot
+        string depot = "Depot"; 
 
         if (deliveryGraph.find(depot) == deliveryGraph.end()) {
             cout << "Error: 'Depot' location is missing for optimization." << endl;
             return;
         }
 
-        // Path 1: Agent travel from Depot to Restaurant
+       
         vector<string> path1 = findShortestPath(depot, restaurant);
         int distance1 = calculatePathDistance(path1);
 
-        // Path 2: Delivery travel from Restaurant to Destination
+        
         vector<string> path2 = findShortestPath(restaurant, destination);
         int distance2 = calculatePathDistance(path2);
 
@@ -255,36 +244,36 @@ public:
         }
     }
     
-    // Utility function to sum up the weights (distances) along a given path
+    
     int calculatePathDistance(const vector<string>& path) {
         if (path.size() < 2) return 0;
         int totalDistance = 0;
         for (size_t i = 0; i < path.size() - 1; ++i) {
             string start = path[i];
             string end = path[i+1];
-            // Check if the edge exists and add its distance
+            
             if (deliveryGraph.count(start) && deliveryGraph[start].count(end)) {
                 totalDistance += deliveryGraph[start][end];
             } else {
-                return INT_MAX; // Indicate a broken path
+                return INT_MAX; 
             }
         }
         return totalDistance;
     }
 
-    // Feature 8: Revert the last delivery (Service Recovery: Stack Pop & Queue Push)
+    
     void revertLastDelivery() {
         if (completedOrders.empty()) {
             cout << "No completed deliveries to revert." << endl;
             return;
         }
-        Order revertedOrder = completedOrders.top(); // Get the most recent completed order
-        completedOrders.pop();                       // Remove from the completed stack
-        incomingOrders.push(revertedOrder);          // Place it back into the pending queue for re-processing
+        Order revertedOrder = completedOrders.top(); 
+        completedOrders.pop();                       
+        incomingOrders.push(revertedOrder);          
         cout << "Reverted delivery ID " << revertedOrder.id << " and placed back in the pending queue." << endl;
     }
 
-    // Feature 9: View system statistics and content summary
+
     void systemStatus() {
         cout << "\n--- System Status ---" << endl;
         cout << "Pending Orders (Queue Size): " << incomingOrders.size() << endl;
@@ -295,14 +284,12 @@ public:
         for (const auto& pair : deliveryGraph) {
             cout << pair.first << ", ";
         }
-        // Backspace characters to remove the final comma and space
+       
         cout << "\b\b \n---------------------\n" << endl;
     }
 };
 
-// --- Input Handling Functions ---
 
-// Displays the main interactive menu options
 void showMenu() {
     cout << "\n=============== Food Delivery System Menu ===============" << endl;
     cout << "1. Add Location (Graph Node)" << endl;
@@ -319,20 +306,20 @@ void showMenu() {
     cout << "Enter your choice: ";
 }
 
-// Robust input function for integers
+
 int getIntInput() {
     int value;
     while (!(cin >> value)) {
         cout << "Invalid input. Please enter an integer: ";
-        cin.clear(); // Clear the error flags
-        cin.ignore(numeric_limits<streamsize>::max(), '\n'); // Discard bad input
+        cin.clear(); 
+        cin.ignore(numeric_limits<streamsize>::max(), '\n'); 
     }
-    // Consume the remaining newline character after successful read
+    
     cin.ignore(numeric_limits<streamsize>::max(), '\n');
     return value;
 }
 
-// Robust input function for doubles (prices)
+
 double getDoubleInput() {
     double value;
     while (!(cin >> value)) {
@@ -344,14 +331,14 @@ double getDoubleInput() {
     return value;
 }
 
-// Input function for strings (locations)
+
 string getStringInput() {
     string value;
     getline(cin, value);
     return value;
 }
 
-// --- Main Execution ---
+
 
 int main() {
     FoodDeliverySystem fds;
@@ -435,4 +422,5 @@ int main() {
     } while (choice != 0);
 
     return 0;
+
 }
